@@ -1,0 +1,12 @@
+schema_version: 1
+workspace_name: pac-workspace
+engine_min_version: "0.1.0"
+vault_dir: vault
+library_dir: library
+sources_dir: sources
+indexes_dir: indexes
+template_dir: templates
+codex:
+  evaluation_profile: default
+  evaluation_profile_file: codex/profiles/default.md
+  interests: []

@@ -1,0 +1,16 @@
+.env
+.DS_Store
+.venv/
+__pycache__/
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+/.cache/
+/config.yaml
+/pac-workspace/
+/vault/
+/library/
+/sources/
+/templates/
+/indexes/
+*.sqlite

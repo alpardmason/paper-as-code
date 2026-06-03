@@ -1,0 +1,5 @@
+schema_version: 1
+
+# Optional user-local default workspace path.
+# Real values can expose personal directory names, so commit only this example file.
+default_workspace: null
