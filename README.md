@@ -66,3 +66,7 @@ PaC uses optional user-local engine config plus workspace-local config.
 Workspace config can select a Markdown Codex evaluation profile, such as
 `codex/profiles/default.md`. Context bundles include that profile so Codex can evaluate sources
 according to the workspace owner's interests.
+
+## License
+
+PaC is released under the MIT License. See `LICENSE`.

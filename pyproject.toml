@@ -2,6 +2,7 @@
 name = "pac"
 version = "0.1.0"
 description = "Agent-first Paper as Code toolkit for research objects."
+license = "MIT"
 requires-python = ">=3.12"
 dependencies = [
   "pydantic>=2.7",

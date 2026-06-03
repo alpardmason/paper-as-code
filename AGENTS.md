@@ -97,3 +97,8 @@ Maintain this file with:
   Context: PaC needs user-local defaults while workspaces need portable research preferences.
   Alternatives considered: all config in `pac-workspace.yaml`, committed engine `config.yaml`, AGENTS-only instructions.
   Rationale: Built-in defaults plus optional user-local engine config keep personal paths out of the public repo, while workspace YAML can select readable Markdown profiles for Codex evaluation.
+
+- Decision: License the public engine under MIT.
+  Context: PaC is a simple public engine where adoption and reuse matter more than restricting commercial use.
+  Alternatives considered: PolyForm Noncommercial, Apache-2.0, Business Source License.
+  Rationale: MIT is familiar, permissive, and low-friction for users who can already rebuild similar tooling with coding agents.
