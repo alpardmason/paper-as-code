@@ -43,6 +43,33 @@ The command copies only workspace defaults from packaged engine assets. It does 
 
 For the recommended nested layout, keep `pac-workspace/` inside the public engine directory and ignore it from the engine repository. The nested workspace can still be initialized as its own independent private Git repository.
 
+## Dashboard
+
+PaC uses a hybrid dashboard:
+
+- `pac dashboard build --format obsidian --json` writes `vault/Dashboard.md` for Obsidian review.
+- `pac dashboard build --format html --json` writes `indexes/dashboard.html` for browser review.
+
+Both views are rendered from the same object metadata, report/note frontmatter, tags, and curated
+related object IDs.
+
+## External Frontends
+
+Private workspaces may use external frontends such as Notion for human review while PaC remains the
+local metadata, report, validation, and indexing engine.
+
+Recommended generic flow:
+
+1. An external Inbox captures candidate sources.
+2. Codex reviews new items and records `Import`, `Skip`, or `Ask Me` decisions.
+3. Accepted items become local PaC intake/source/object metadata.
+4. Codex writes reports from `templates/report.md`.
+5. A private sync ledger records external page IDs, observed edit timestamps, local hashes, sync
+   direction, worker status, and conflicts.
+
+The public engine does not include a Notion connector yet. Public code and docs must not contain
+private database IDs, page IDs, workspace paths, or personal source names.
+
 ## Privacy Boundary
 
 Track in the private workspace:

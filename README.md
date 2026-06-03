@@ -32,6 +32,10 @@ uv run pac workspace doctor --json
 
 Open only `vault/` from the private workspace in Obsidian.
 
+Private workspaces can also use external frontends such as Notion for review and capture. Keep that
+sync configuration and any page/database IDs in the private workspace; the public engine does not
+ship a Notion connector yet.
+
 ## Development
 
 ```bash
@@ -51,6 +55,8 @@ uv run pac --workspace pac-workspace intake add --source sources/inbox/paper.pdf
 uv run pac --workspace pac-workspace intake ingest --id intake-... --json
 uv run pac --workspace pac-workspace context build --id 2025-example-paper --purpose report --json
 uv run pac --workspace pac-workspace report validate --id 2025-example-paper --json
+uv run pac --workspace pac-workspace dashboard build --format obsidian --json
+uv run pac --workspace pac-workspace dashboard build --format html --json
 uv run pac --workspace pac-workspace index rebuild --json
 uv run pac --workspace pac-workspace search "retrieval" --json
 ```

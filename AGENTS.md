@@ -29,6 +29,24 @@ The engine may create workspace files, validate metadata, build context, and ind
 - Return validation results as structured data.
 - Resolve workspaces through `--workspace`, `PAC_WORKSPACE`, or nearest `pac-workspace.yaml`.
 - If none of those are available, resolve through engine config `default_workspace`.
+- Keep dashboard commands deterministic: build dashboard data from workspace metadata, emit JSON,
+  and write rendered Obsidian/HTML views only for explicit dashboard commands.
+
+## Optional External Frontends
+
+PaC may document generic external frontends, such as Notion, as private-workspace workflows. The
+public engine must stay connector-agnostic until a tested generic sync API exists.
+
+Rules:
+
+- Do not add hard-coded Notion database IDs, page IDs, private URLs, private workspace paths, or
+  personal source names to public engine files.
+- Treat external frontend metadata as workspace-private configuration or ledger state.
+- Keep external sync guidance generic: field names and ownership rules are acceptable; real IDs and
+  personal examples are not.
+- Keep durable sync ledgers separate from generated search indexes such as `indexes/pac.sqlite`.
+- Codex-authored reports must use `templates/report.md`; PaC must not generate final report prose
+  or deep-note prose during sync.
 
 ## Engineering Standards
 
@@ -49,6 +67,8 @@ The engine may create workspace files, validate metadata, build context, and ind
 - Store annotated PDFs separately from originals.
 - Register GitHub repositories as links first; clone only after explicit approval.
 - Register URLs first; snapshot or download only after explicit approval.
+- Treat `library/objects/*.yaml` as the source of truth for tags and related object IDs.
+- Treat vault wiki links as readable navigation generated from, or curated alongside, metadata.
 
 ## Knowledge Accumulation
 
@@ -102,3 +122,18 @@ Maintain this file with:
   Context: PaC is a simple public engine where adoption and reuse matter more than restricting commercial use.
   Alternatives considered: PolyForm Noncommercial, Apache-2.0, Business Source License.
   Rationale: MIT is familiar, permissive, and low-friction for users who can already rebuild similar tooling with coding agents.
+
+- Decision: Use a hybrid dashboard and knowledge graph.
+  Context: Reports and notes need a centralized review surface while staying native to Obsidian.
+  Alternatives considered: Obsidian + Dataview only, engine-generated HTML only, hybrid dashboard.
+  Rationale: `vault/Dashboard.md` gives the daily Obsidian view, while `indexes/dashboard.html`
+  provides a portable browser view from the same metadata. Tags and related IDs stay in object
+  YAML; report and note frontmatter exposes wiki links for the vault graph.
+
+- Decision: Keep Notion-as-frontend sync private and generic for now.
+  Context: A Notion database can be an excellent human review surface, while PaC remains the local
+  metadata, report, validation, and indexing engine.
+  Alternatives considered: implement `pac notion` immediately, use only Obsidian dashboards, or
+  rely on ad hoc Notion scripts.
+  Rationale: Private runbooks and ledgers allow experimentation without leaking workspace details
+  or freezing a public API before the workflow is stable.

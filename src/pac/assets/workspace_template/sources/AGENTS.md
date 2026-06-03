@@ -11,3 +11,10 @@ Rules:
 - `sources/web/` stores explicitly approved web snapshots.
 
 Never overwrite original PDFs. Register GitHub repositories and URLs as links first; clone or download only after explicit approval.
+
+Dashboard visibility should reference managed object metadata and vault artifacts, not raw PDFs,
+cloned repositories, or web snapshots. Keep source material out of `vault/`.
+
+When an external web clipper is used, treat clipped URLs as intake hints until Codex imports them
+into PaC metadata. Do not snapshot web pages, clone repositories, or download files merely because
+they appear in an external inbox.

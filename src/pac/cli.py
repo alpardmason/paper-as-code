@@ -19,6 +19,7 @@ from pac.config import (
     validate_workspace_config,
     write_model,
 )
+from pac.dashboard import build_dashboard
 from pac.indexer import rebuild_index, search
 from pac.models import Rating
 from pac.paths import WORKSPACE_MARKER, ProjectPaths, WorkspaceNotFoundError
@@ -122,6 +123,16 @@ def build_parser() -> argparse.ArgumentParser:
     object_update = _command(object_sub, "update", _object_update)
     object_update.add_argument("--id", required=True)
     object_update.add_argument("--rating", type=int, choices=[1, 2, 3])
+    object_update.add_argument(
+        "--tags",
+        default=None,
+        help='Replace tags with a YAML list, e.g. \'["topic/attention", "pe/rope"]\'.',
+    )
+    object_update.add_argument(
+        "--related",
+        default=None,
+        help='Replace related object IDs with a YAML list, e.g. \'["2025-paper"]\'.',
+    )
 
     report = subparsers.add_parser("report")
     report_sub = report.add_subparsers(dest="report_command")
@@ -160,6 +171,16 @@ def build_parser() -> argparse.ArgumentParser:
     index = subparsers.add_parser("index")
     index_sub = index.add_subparsers(dest="index_command")
     _command(index_sub, "rebuild", _index_rebuild)
+
+    dashboard = subparsers.add_parser("dashboard")
+    dashboard_sub = dashboard.add_subparsers(dest="dashboard_command")
+    dashboard_build = _command(dashboard_sub, "build", _dashboard_build)
+    dashboard_build.add_argument(
+        "--format",
+        default="obsidian",
+        choices=["obsidian", "html", "json"],
+        help="Dashboard output format.",
+    )
 
     search_parser = _command(subparsers, "search", _search)
     search_parser.add_argument("query")
@@ -312,7 +333,13 @@ def _object_show(args: argparse.Namespace) -> dict[str, Any]:
 
 def _object_update(args: argparse.Namespace) -> dict[str, Any]:
     rating: Rating | None = args.rating
-    return update_object(_paths(args), object_id=args.id, rating=rating)
+    return update_object(
+        _paths(args),
+        object_id=args.id,
+        rating=rating,
+        tags=_optional_string_list(args.tags, label="tags"),
+        related=_optional_string_list(args.related, label="related"),
+    )
 
 
 def _report_ensure(args: argparse.Namespace) -> dict[str, Any]:
@@ -343,8 +370,21 @@ def _index_rebuild(args: argparse.Namespace) -> dict[str, Any]:
     return rebuild_index(_paths(args))
 
 
+def _dashboard_build(args: argparse.Namespace) -> dict[str, Any]:
+    return build_dashboard(_paths(args), output_format=args.format)
+
+
 def _search(args: argparse.Namespace) -> dict[str, Any]:
     return search(_paths(args), args.query)
+
+
+def _optional_string_list(value: str | None, *, label: str) -> list[str] | None:
+    if value is None:
+        return None
+    parsed = parse_yaml_value(value)
+    if not isinstance(parsed, list) or not all(isinstance(item, str) for item in parsed):
+        raise ValueError(f"{label} must be a YAML list of strings")
+    return parsed
 
 
 def _emit(result: dict[str, Any], *, json_output: bool) -> None:

@@ -107,6 +107,7 @@ class ResearchObject(BaseModel):
     year: int | None = None
     rating: Rating | None = None
     tags: list[str] = Field(default_factory=list)
+    related: list[str] = Field(default_factory=list)
     sources: list[str] = Field(default_factory=list)
     artifacts: Artifacts
     workflow: Workflow = Field(default_factory=Workflow)

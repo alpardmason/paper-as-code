@@ -1,8 +1,14 @@
 ---
+type: report
 object_id: REQUIRED
 title: REQUIRED
 rating: null
 status: draft
+tags: []
+related: []
+related_reports: []
+related_notes: []
+note: null
 ---
 
 # REQUIRED_TITLE
@@ -41,7 +47,7 @@ Explain what the reader can apply, reimplement, test, or adapt in engineering wo
 
 ## Related Work and Connections
 
-Connect this object to related papers, projects, concepts, and existing notes.
+Connect this object to related papers, projects, concepts, and existing notes. Use Obsidian wiki links for meaningful report and note connections.
 
 ## Recommended Next Actions
 

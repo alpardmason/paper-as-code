@@ -431,6 +431,242 @@ def test_note_creation_requires_important_rating_and_has_no_body_template(
     assert "vault/Notes/AGENTS.md" in note
 
 
+def test_object_update_replaces_tags_and_related_objects(pac_root: Path) -> None:
+    _, first_add = run_cli(
+        pac_root,
+        "intake",
+        "add",
+        "--source",
+        "https://arxiv.org/abs/2501.12345",
+        "--json",
+    )
+    _, first_ingest = run_cli(
+        pac_root, "intake", "ingest", "--id", first_add["intake"]["intake_id"], "--json"
+    )
+    _, second_add = run_cli(
+        pac_root,
+        "intake",
+        "add",
+        "--source",
+        "https://arxiv.org/abs/2501.67890",
+        "--json",
+    )
+    _, second_ingest = run_cli(
+        pac_root, "intake", "ingest", "--id", second_add["intake"]["intake_id"], "--json"
+    )
+
+    code, payload = run_cli(
+        pac_root,
+        "object",
+        "update",
+        "--id",
+        first_ingest["object_id"],
+        "--tags",
+        '["topic/attention", "pe/rope"]',
+        "--related",
+        f'["{second_ingest["object_id"]}"]',
+        "--json",
+    )
+
+    assert code == 0
+    assert payload["object"]["tags"] == ["topic/attention", "pe/rope"]
+    assert payload["object"]["related"] == [second_ingest["object_id"]]
+
+    object_yaml = yaml.safe_load(
+        (pac_root / f"library/objects/{first_ingest['object_id']}.yaml").read_text()
+    )
+    assert object_yaml["tags"] == ["topic/attention", "pe/rope"]
+    assert object_yaml["related"] == [second_ingest["object_id"]]
+
+
+def test_object_update_rejects_invalid_tags_and_related_objects(pac_root: Path) -> None:
+    _, add_payload = run_cli(
+        pac_root,
+        "intake",
+        "add",
+        "--source",
+        "https://arxiv.org/abs/2501.12345",
+        "--json",
+    )
+    _, ingest_payload = run_cli(
+        pac_root, "intake", "ingest", "--id", add_payload["intake"]["intake_id"], "--json"
+    )
+    object_id = ingest_payload["object_id"]
+
+    invalid_cases = (
+        ("--tags", '["#attention"]', "Invalid tag"),
+        ("--tags", '["attention"]', "Invalid tag"),
+        ("--related", '["missing-object"]', "Unknown related object"),
+        ("--related", f'["{object_id}"]', "cannot relate object to itself"),
+    )
+    for option, value, expected_error in invalid_cases:
+        code, payload = run_cli(
+            pac_root,
+            "object",
+            "update",
+            "--id",
+            object_id,
+            option,
+            value,
+            "--json",
+        )
+
+        assert code == 1
+        assert expected_error in payload["error"]
+
+
+def test_frontmatter_sync_preserves_report_and_note_bodies(pac_root: Path) -> None:
+    _, first_add = run_cli(
+        pac_root,
+        "intake",
+        "add",
+        "--source",
+        "https://arxiv.org/abs/2501.12345",
+        "--json",
+    )
+    _, first_ingest = run_cli(
+        pac_root, "intake", "ingest", "--id", first_add["intake"]["intake_id"], "--json"
+    )
+    _, second_add = run_cli(
+        pac_root,
+        "intake",
+        "add",
+        "--source",
+        "https://arxiv.org/abs/2501.67890",
+        "--json",
+    )
+    _, second_ingest = run_cli(
+        pac_root, "intake", "ingest", "--id", second_add["intake"]["intake_id"], "--json"
+    )
+    object_id = first_ingest["object_id"]
+    related_id = second_ingest["object_id"]
+    report_path = pac_root / f"vault/Reports/{object_id}.md"
+    report_path.write_text(full_report(object_id), encoding="utf-8")
+
+    run_cli(
+        pac_root,
+        "object",
+        "update",
+        "--id",
+        object_id,
+        "--rating",
+        "2",
+        "--tags",
+        '["topic/attention"]',
+        "--related",
+        f'["{related_id}"]',
+        "--json",
+    )
+    report_text = report_path.read_text(encoding="utf-8")
+    report_frontmatter = frontmatter(report_text)
+
+    assert report_frontmatter["type"] == "report"
+    assert report_frontmatter["tags"] == ["topic/attention"]
+    assert report_frontmatter["related"] == [related_id]
+    assert "[[Reports/" in report_frontmatter["related_reports"][0]
+    assert "## Core Idea" in report_text
+
+    _, note_payload = run_cli(pac_root, "note", "ensure", "--id", object_id, "--json")
+    note_path = pac_root / note_payload["note"]
+    note_path.write_text(
+        note_path.read_text(encoding="utf-8") + "\n# Deep Dive\n\nPreserved body.\n",
+        encoding="utf-8",
+    )
+
+    run_cli(
+        pac_root,
+        "object",
+        "update",
+        "--id",
+        object_id,
+        "--tags",
+        '["topic/attention", "method/rag"]',
+        "--json",
+    )
+    note_text = note_path.read_text(encoding="utf-8")
+    note_frontmatter = frontmatter(note_text)
+
+    assert note_frontmatter["type"] == "note"
+    assert note_frontmatter["report"].startswith("[[Reports/")
+    assert note_frontmatter["tags"] == ["topic/attention", "method/rag"]
+    assert "# Deep Dive\n\nPreserved body." in note_text
+
+
+def test_dashboard_builds_json_obsidian_and_html_views(pac_root: Path) -> None:
+    _, first_add = run_cli(
+        pac_root,
+        "intake",
+        "add",
+        "--source",
+        "https://arxiv.org/abs/2501.12345",
+        "--json",
+    )
+    _, first_ingest = run_cli(
+        pac_root, "intake", "ingest", "--id", first_add["intake"]["intake_id"], "--json"
+    )
+    _, second_add = run_cli(
+        pac_root,
+        "intake",
+        "add",
+        "--source",
+        "https://arxiv.org/abs/2501.67890",
+        "--json",
+    )
+    _, second_ingest = run_cli(
+        pac_root, "intake", "ingest", "--id", second_add["intake"]["intake_id"], "--json"
+    )
+    first_id = first_ingest["object_id"]
+    second_id = second_ingest["object_id"]
+    (pac_root / f"vault/Reports/{first_id}.md").write_text(
+        full_report(first_id), encoding="utf-8"
+    )
+    run_cli(
+        pac_root,
+        "object",
+        "update",
+        "--id",
+        first_id,
+        "--rating",
+        "2",
+        "--tags",
+        '["topic/attention", "pe/rope"]',
+        "--related",
+        f'["{second_id}"]',
+        "--json",
+    )
+
+    code, json_payload = run_cli(
+        pac_root, "dashboard", "build", "--format", "json", "--json"
+    )
+    assert code == 0
+    assert json_payload["dashboard"]["counts"]["objects"] == 2
+    assert json_payload["dashboard"]["counts"]["ratings"]["2"] == 1
+    assert second_id in json_payload["dashboard"]["next_actions"]["pending_reports"]
+    assert first_id in json_payload["dashboard"]["next_actions"]["notes_needed"]
+    assert any(group["tag"] == "topic/attention" for group in json_payload["dashboard"]["tags"])
+
+    code, obsidian_payload = run_cli(
+        pac_root, "dashboard", "build", "--format", "obsidian", "--json"
+    )
+    dashboard_md = (pac_root / "vault/Dashboard.md").read_text(encoding="utf-8")
+    assert code == 0
+    assert obsidian_payload["path"] == "vault/Dashboard.md"
+    assert "# PaC Dashboard" in dashboard_md
+    assert "```dataview" in dashboard_md
+    assert f"[[Reports/{first_id}|" in dashboard_md
+    assert "#topic/attention" in dashboard_md
+
+    code, html_payload = run_cli(
+        pac_root, "dashboard", "build", "--format", "html", "--json"
+    )
+    dashboard_html = (pac_root / "indexes/dashboard.html").read_text(encoding="utf-8")
+    assert code == 0
+    assert html_payload["path"] == "indexes/dashboard.html"
+    assert "<!doctype html>" in dashboard_html
+    assert "topic/attention" in dashboard_html
+    assert first_id in dashboard_html
+
+
 def test_github_and_url_ingestion_register_without_clone_or_download(pac_root: Path) -> None:
     _, add_payload = run_cli(
         pac_root,
@@ -548,3 +784,12 @@ def test_context_prefers_workspace_template_and_falls_back_to_engine_default(
     assert fallback_payload["template_file"].endswith(
         "src/pac/assets/workspace_template/templates/report.md"
     )
+
+
+def frontmatter(markdown: str) -> dict[str, object]:
+    assert markdown.startswith("---\n")
+    parts = markdown.split("---\n", 2)
+    assert len(parts) == 3
+    data = yaml.safe_load(parts[1])
+    assert isinstance(data, dict)
+    return data
