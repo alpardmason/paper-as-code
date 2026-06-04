@@ -44,6 +44,11 @@ Rules:
 - Treat external frontend metadata as workspace-private configuration or ledger state.
 - Keep external sync guidance generic: field names and ownership rules are acceptable; real IDs and
   personal examples are not.
+- External frontend syncs must use an exact durable decision field or ledger state for item
+  processing; semantic search results are not a completeness guarantee.
+- External frontend syncs must check for an existing object/page by stable object ID, source URL,
+  or exact title before creating a new frontend row. Duplicate stable IDs are conflicts, not normal
+  sync results.
 - Keep durable sync ledgers separate from generated search indexes such as `indexes/pac.sqlite`.
 - Codex-authored reports must use `templates/report.md`; PaC must not generate final report prose
   or deep-note prose during sync.
