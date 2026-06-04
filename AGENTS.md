@@ -49,6 +49,9 @@ Rules:
 - External frontend syncs must check for an existing object/page by stable object ID, source URL,
   or exact title before creating a new frontend row. Duplicate stable IDs are conflicts, not normal
   sync results.
+- When an external frontend is used as a human reading surface, sync must push the validated local
+  report body as a projection after metadata writes, and must verify nonblank content before
+  marking the item synced/imported.
 - Keep durable sync ledgers separate from generated search indexes such as `indexes/pac.sqlite`.
 - Codex-authored reports must use `templates/report.md`; PaC must not generate final report prose
   or deep-note prose during sync.
